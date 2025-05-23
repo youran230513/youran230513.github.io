@@ -1,0 +1,249 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>1.1 GPIO理论 | youran'blog</title><meta name="author" content="youran"><meta name="copyright" content="youran"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="ESP32 系列芯片中，引脚定义是从 GPIO0~GPIO48，一共有 49 个 IO 引脚，ESP32-S3 官方文档给出的是 45 个 GPIO 可用，但其实每个型号 的芯片上对 GPIO 的使用都有些细微差异，并且有些引脚其实并没有被引出，所以我们能够使用的引脚也 只有 33 个。 ![[Pasted image 20250519100433.png]]  GPIO0 、 GPIO3 、GP">
+<meta property="og:type" content="article">
+<meta property="og:title" content="1.1 GPIO理论">
+<meta property="og:url" content="http://example.com/2025/05/21/2%E3%80%81%E5%A4%96%E8%AE%BE%E6%95%99%E7%A8%8B/1%E3%80%81GPIO/1.1%20GPIO%E7%90%86%E8%AE%BA/index.html">
+<meta property="og:site_name" content="youran&#39;blog">
+<meta property="og:description" content="ESP32 系列芯片中，引脚定义是从 GPIO0~GPIO48，一共有 49 个 IO 引脚，ESP32-S3 官方文档给出的是 45 个 GPIO 可用，但其实每个型号 的芯片上对 GPIO 的使用都有些细微差异，并且有些引脚其实并没有被引出，所以我们能够使用的引脚也 只有 33 个。 ![[Pasted image 20250519100433.png]]  GPIO0 、 GPIO3 、GP">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="http://example.com/img/duy-le-duc-Zl8exP2R9ME-unsplash.jpg">
+<meta property="article:published_time" content="2025-05-20T16:00:00.000Z">
+<meta property="article:modified_time" content="2025-05-23T01:34:42.749Z">
+<meta property="article:author" content="youran">
+<meta property="article:tag" content="ESP32">
+<meta property="article:tag" content="GPIO">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/img/duy-le-duc-Zl8exP2R9ME-unsplash.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "1.1 GPIO理论",
+  "url": "http://example.com/2025/05/21/2%E3%80%81%E5%A4%96%E8%AE%BE%E6%95%99%E7%A8%8B/1%E3%80%81GPIO/1.1%20GPIO%E7%90%86%E8%AE%BA/",
+  "image": "http://example.com/img/duy-le-duc-Zl8exP2R9ME-unsplash.jpg",
+  "datePublished": "2025-05-20T16:00:00.000Z",
+  "dateModified": "2025-05-23T01:34:42.749Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "youran",
+      "url": "http://example.com/"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/image/%E5%8A%A8%E7%89%A9.png"><link rel="canonical" href="http://example.com/2025/05/21/2%E3%80%81%E5%A4%96%E8%AE%BE%E6%95%99%E7%A8%8B/1%E3%80%81GPIO/1.1%20GPIO%E7%90%86%E8%AE%BA/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const mediaQueryDark = window.matchMedia('(prefers-color-scheme: dark)')
+          const mediaQueryLight = window.matchMedia('(prefers-color-scheme: light)')
+
+          if (theme === undefined) {
+            if (mediaQueryLight.matches) activateLightMode()
+            else if (mediaQueryDark.matches) activateDarkMode()
+            else {
+              const hour = new Date().getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            mediaQueryDark.addEventListener('change', () => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else {
+            theme === 'light' ? activateLightMode() : activateDarkMode()
+          }
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.json","preload":false,"top_n_per_article":1,"unescape":false,"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '1.1 GPIO理论',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/style.css?1"><script src="https://cdn.bootcss.com/jquery/3.4.1/jquery.min.js"></script><link rel="stylesheet" href="/styles/main.css">
+- <link rel="stylesheet" href="/css/background.css"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+  window.addEventListener('load', preloader.endLoading)
+
+  if (false) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="web_bg" style="background: [object Object];"></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/pony.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">13</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">4</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fa fa-graduation-cap"></i><span> 博文</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/categories/"><i class="fa-fw fa fa-archive"></i><span> 分类</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fa fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fa fa-folder-open"></i><span> 归档</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> 生活</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/share/"><i class="fa-fw fa fa-comments-o"></i><span> 分享</span></a></li><li><a class="site-page child" href="/gallery/"><i class="fa-fw fa fa-camera-retro"></i><span> 相册</span></a></li><li><a class="site-page child" href="/music/"><i class="fa-fw fa fa-music"></i><span> 音乐</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> 影视</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fa fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/message/"><i class="fa-fw fas fa-paper-plane"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于笔者</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(/img/duy-le-duc-Zl8exP2R9ME-unsplash.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="/img/pony.jpg" alt="Logo"><span class="site-name">youran'blog</span></a><a class="nav-page-title" href="/"><span class="site-name">1.1 GPIO理论</span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 主页</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fa fa-graduation-cap"></i><span> 博文</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/categories/"><i class="fa-fw fa fa-archive"></i><span> 分类</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fa fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/archives/"><i class="fa-fw fa fa-folder-open"></i><span> 归档</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> 生活</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/share/"><i class="fa-fw fa fa-comments-o"></i><span> 分享</span></a></li><li><a class="site-page child" href="/gallery/"><i class="fa-fw fa fa-camera-retro"></i><span> 相册</span></a></li><li><a class="site-page child" href="/music/"><i class="fa-fw fa fa-music"></i><span> 音乐</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> 影视</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/links/"><i class="fa-fw fa fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" href="/message/"><i class="fa-fw fas fa-paper-plane"></i><span> 留言板</span></a></div><div class="menus_item"><a class="site-page" href="/about/"><i class="fa-fw fas fa-heart"></i><span> 关于笔者</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">1.1 GPIO理论</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-05-20T16:00:00.000Z" title="发表于 2025-05-21 00:00:00">2025-05-21</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-05-23T01:34:42.749Z" title="更新于 2025-05-23 09:34:42">2025-05-23</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/ESP32-IDF%E5%BC%80%E5%8F%91%E7%AC%94%E8%AE%B0/">ESP32-IDF开发笔记</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">1k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>3分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>ESP32 系列芯片中，引脚定义是从 GPIO0~GPIO48，一共有 49 个 IO 引脚，ESP32-S3 官方文档给出的是 45 个 GPIO 可用，但其实每个型号 的芯片上对 GPIO 的使用都有些细微差异，并且有些引脚其实并没有被引出，所以我们能够使用的引脚也 只有 33 个。</p>
+<p>![[Pasted image 20250519100433.png]]</p>
+<ol>
+<li>GPIO0 、 GPIO3 、GPIO45 、 GPIO46在系统启动的时候需被当做了 Strapping 管脚，有特殊含义， 所以在启动阶段不能使用，但启动完毕之后是可用的；</li>
+<li>GPIO19 和 GPIO20 是 USB 固定引脚，如果使用 USB 功能的话只能用这两个引脚，如果不使用 USB 功能，这两个引脚可以随意使用；</li>
+<li>GPIO43 和 GPIO44 被定义为 UART0 ，作为串口0对外输出信息，同时还具备了固件烧录的功能，所 以如果使用 REPL 模式的情况下，这两个引脚是不能使用的，如果使用 main 模式则可以考虑启用；</li>
+<li>GPIO26~GPIO32， 这一组引脚被用作片内的 Flash 或者是 PSRAM 通讯用，外部不能使用</li>
+<li>GPIO33~GPIO38，MooPi-ES 系列核心板中有几个型号，这几个引脚用作了扩展 Flash 的引脚，如果 被占用，则这几个引脚也是不可用的。</li>
+</ol>
+<hr>
+<p>![[Pasted image 20250519132900.png]]</p>
+<h1 id="引脚整体说明"><a href="#引脚整体说明" class="headerlink" title="引脚整体说明"></a>引脚整体说明</h1><p>GPIO36: 只能作为输入不能输出; ADC1通道0的采集引脚</p>
+<p>GPIO39: 只能作为输入不能输出; ADC1通道3的采集引脚</p>
+<p>GPIO34: 只能作为输入不能输出; ADC1通道6的采集引脚</p>
+<p>GPIO35: 只能作为输入不能输出; ADC1通道7的采集引脚</p>
+<p>GPIO32: 输入输出IO; ADC1通道4的采集引脚; 触摸检测通道9</p>
+<p>GPIO33: 输入输出IO; ADC1通道5的采集引脚; 触摸检测通道8</p>
+<p>GPIO25: 输入输出IO; ADC2通道8的采集引脚; DAC输出通道1</p>
+<p>GPIO26: 输入输出IO; ADC2通道9的采集引脚; DAC输出通道2</p>
+<p>GPIO27: 输入输出IO; ADC2通道7的采集引脚; 触摸检测通道7</p>
+<p>GPIO14: 上电默认输出一个高脉冲(600ms);输入输出IO; ADC2通道6的采集引脚; 触摸检测通道6; JTMS; HSPI_CLK; HS2_CLK; SD_CLK</p>
+<p>GPIO12: 模组启动时必须保证为低电平,内部默认下拉,;输入输出IO; ADC2通道5的采集引脚; 触摸检测通道5; JTDI; HSPI_Q; HS2_DATA2; SD_DATA2</p>
+<p>GPIO13: 输入输出IO; ADC2通道4的采集引脚; 触摸检测通道4; JTCLK; HSPI_D; HS2_DATA3; SD_DATA3</p>
+<p>GPIO9:   连接ESP32内部SPI闪存,用户不要使用其作为普通IO.可以连接外部Flash或SRAM  </p>
+<p>GPIO10: 连接ESP32内部SPI闪存,用户不要使用其作为普通IO.可以连接外部Flash或SRAM  </p>
+<p>GPIO11: 连接ESP32内部SPI闪存,作为闪存的片选,用户不要使用.</p>
+<p>GPIO6:  连接ESP32内部SPI闪存,用户不要使用其作为普通IO.可以连接外部Flash或SRAM</p>
+<p>GPIO7:  连接ESP32内部SPI闪存,用户不要使用其作为普通IO.可以连接外部Flash或SRAM  </p>
+<p>GPIO8:  连接ESP32内部SPI闪存,用户不要使用其作为普通IO.可以连接外部Flash或SRAM  </p>
+<p>GPIO15: 输入输出IO; ADC2通道3的采集引脚; 触摸检测通道3; JTDO; HSPI_CS; HS2_CMD; SD_CMD</p>
+<p>GPIO2:  输入输出IO; ADC2通道2的采集引脚; 触摸检测通道2; HSPI_WP; HS2_DATA0; SD_DATA0</p>
+<p>GPIO0:  模组启动之前保持低电平进入程序下载模式;输入输出IO; ADC2通道1的采集引脚; 触摸检测通道1; </p>
+<p>GPIO4:  输入输出IO; ADC2通道0的采集引脚; 触摸检测通道0; HSPI_HD; HS2_DATA1; </p>
+<p>GPIO16:  输入输出IO; HS1_DATA4; USART2_RX(默认AT指令固件通信引脚);</p>
+<p>GPIO17:  输入输出IO; HS1_DATA5; USART2_TX(默认AT指令固件通信引脚);</p>
+<p>GPIO5:   上电默认输出一个低脉冲(200ms左右),正常运行输出高电平; 输入输出IO; VSPI_CS; HS1_DATA6;</p>
+<p>GPIO18:  输入输出IO; VSPI_CLK; HS1_DATA7;</p>
+<p>GPIO19:  输入输出IO; VSPI_Q;</p>
+<p>GPIO21:  输入输出IO; VSPI_HD;</p>
+<p>GPIO3:    输入输出IO; USART0_RX;(程序串口通信下载口)  </p>
+<p>GPIO1:    输入输出IO; USART0_TX;(程序串口通信下载口)</p>
+<p>GPIO23:  输入输出IO; VSPI_D; HS1_STROBE;</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="http://example.com">youran</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="http://example.com/2025/05/21/2%E3%80%81%E5%A4%96%E8%AE%BE%E6%95%99%E7%A8%8B/1%E3%80%81GPIO/1.1%20GPIO%E7%90%86%E8%AE%BA/">http://example.com/2025/05/21/2、外设教程/1、GPIO/1.1 GPIO理论/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="http://example.com" target="_blank">youran'blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/ESP32/">ESP32</a><a class="post-meta__tags" href="/tags/GPIO/">GPIO</a></div><div class="post-share"><div class="social-share" data-image="/img/duy-le-duc-Zl8exP2R9ME-unsplash.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞助</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="/img/wechat.jpg" target="_blank"><img class="post-qr-code-img" src="/img/wechat.jpg" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="/img/alipay.jpg" target="_blank"><img class="post-qr-code-img" src="/img/alipay.jpg" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2025/05/21/2%E3%80%81%E5%A4%96%E8%AE%BE%E6%95%99%E7%A8%8B/2%E3%80%81%E4%B8%AD%E6%96%AD/2.1%20%E4%B8%AD%E6%96%AD%E7%90%86%E8%AE%BA/" title="2.1中断理论"><img class="cover" src="/img/adrian-appalsamy-RS_qigq_dC8-unsplash.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">2.1中断理论</div></div><div class="info-2"><div class="info-item-1">![[Pasted image 20250519111748.png]]![[Pasted image 20250519111949.png]] ![[Pasted image 20250519112416.png]]一般不用全局中断 ![[Pasted image 20250519112632.png]]二选一，一般下面方式。 ![[Pasted image 20250519112809.png]]记得安装中断服务![[Pasted image 20250519113952.png]] ![[Pasted image 20250519114031.png]] 注意：![[Pasted image 20250519114617.png]] ![[Pasted image 20250519115303.png]]![[Pasted image 20250519115319.png]] </div></div></div></a><a class="pagination-related" href="/2025/05/21/2%E3%80%81%E5%A4%96%E8%AE%BE%E6%95%99%E7%A8%8B/2%E3%80%81%E4%B8%AD%E6%96%AD/2.2%20%E6%8C%89%E9%94%AE%E4%B8%AD%E6%96%AD%E7%82%B9%E7%81%AF/" title="2.2按键中断点灯"><img class="cover" src="/img/annie-spratt-f1IBljMUzpQ-unsplash.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">2.2按键中断点灯</div></div><div class="info-2"><div class="info-item-1">1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859606162#include &lt;stdio.h&gt;#include &quot;driver/gpio.h&quot;          // GPIO 控制头文件#include &quot;freertos/FreeRTOS.h&quot;    // FreeRTOS 相关头文件（虽然本代码没用到任务）#include &quot;esp_log.h&quot;              // 用于日志打印（此代码中未使用）/** * @brief GPIO 中断服务函数，当 GPIO 口电平发生变化时触发 * @param args 传入的参数，是中断来源的 GPIO 编号（通过强转传入） */static void gpio_isr_handle(void *args)&#123;    int io_num = (int)args;     ...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2025/05/21/2%E3%80%81%E5%A4%96%E8%AE%BE%E6%95%99%E7%A8%8B/1%E3%80%81GPIO/1.2.1%20%E9%A9%B1%E5%8A%A8LED-%E6%97%A0freertos/" title="1.2.1 驱动OLED-无freertos"><img class="cover" src="/img/sophie-skold-EZGwKfRR5Zc-unsplash.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-05-21</div><div class="info-item-2">1.2.1 驱动OLED-无freertos</div></div><div class="info-2"><div class="info-item-1">GPIO 输出输出配置![[Pasted image 20250519103522.png]] ![[Pasted image 20250519103658.png]] 123456789101112131415161718192021222324#include &lt;stdio.h&gt;#include &quot;driver/gpio.h&quot;#include &quot;freertos/FreeRTOS.h&quot;void app_main(void)&#123;    // //1.配置GPIO    // gpio_config_t gpio_cfg = &#123;    //     .pin_bit_mask = 1ULL &lt;&lt; 9,      //pin掩码    //     .mode = GPIO_MODE_OUTPUT,    // &#125;;    // gpio_config(&amp;gpio_cfg);             //配置    gpio_reset_pin(GPIO_NUM_9);   ...</div></div></div></a><a class="pagination-related" href="/2025/05/21/2%E3%80%81%E5%A4%96%E8%AE%BE%E6%95%99%E7%A8%8B/1%E3%80%81GPIO/1.2.2%20%E9%A9%B1%E5%8A%A8LED-%E6%9C%89freertos/" title="1.2.1 驱动OLED-有freertos"><img class="cover" src="/img/donna-mcl-yOLpkOUw8qk-unsplash.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-05-21</div><div class="info-item-2">1.2.1 驱动OLED-有freertos</div></div><div class="info-2"><div class="info-item-1">12345678910111213141516171819202122232425262728293031323334353637383940414243#include &lt;stdio.h&gt;#include &quot;freertos/FreeRTOS.h&quot;#include &quot;freertos/task.h&quot;#include &quot;driver/gpio.h&quot;// 定义三个LED对应的GPIO引脚#define LED_GPIO_1 GPIO_NUM_2  // 第一个LED连接到GPIO2/​**​ * @brief 控制LED闪烁的任务函数（周期500ms） *  * @param param 参数，传递LED对应的GPIO引脚号 */void led_run_task(void *param)&#123;    int gpio_level = 0;          // 初始电平状态（0=低电平，1=高电平）    gpio_num_t gpio_num = (gpio_num_t)param;  //...</div></div></div></a><a class="pagination-related" href="/2025/05/20/1%E3%80%81freertos/2%E3%80%81%E9%98%9F%E5%88%97%E6%93%8D%E4%BD%9C2/" title="2.队列操作"><img class="cover" src="/img/alexa-kruger-ZQG9COnfXDo-unsplash.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-05-20</div><div class="info-item-2">2.队列操作</div></div><div class="info-2"><div class="info-item-1">esp32里面跑的是freertos,如果需要传递数据需要使用内部的缓存管理. 任务间同步RTOS中的同步，是指不同任务之间或者任务与外部事件之间的协同工作方式，确保多个并发执行的任务按照预期的顺序或时机执行。它设计到线程或任务间的通信和协调机制，目的是为了避免数据竞争、解决竞态条件，并确保系统的正确行为。 互斥是指某一资源同时只允许一个访问者对其进行访问，具有唯一性和排他性。 ![[Pasted image 20250518093926.png]] 1234567891011121314151617181920212223242526272829QueueHandle_t xQueueCreate(//创建一个队列，成功返回队列句柄	UBaseType_t uxQueueLength,//队列容量	UBaseType_t uxltemSize    //每个队列项所占内存的大小（单位是字节）);BaseType_t xQueueSend(//向队列头部发送一个消息	QueueHandle_t xQueue,//队列句柄	const void *...</div></div></div></a><a class="pagination-related" href="/2025/05/20/1%E3%80%81freertos/1.%E5%88%9B%E5%BB%BA%E4%BB%BB%E5%8A%A11/" title="1.创建任务"><img class="cover" src="/img/alex-rybin-QDcKobbw41g-unsplash.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-05-20</div><div class="info-item-2">1.创建任务</div></div><div class="info-2"><div class="info-item-1">任务可以存在于以下状态：运行：当任务实际执行时，它被称为处于运行状态。任务当前正在使用处理机。如果运行RTOS的处理器只有一个内核，那么在任何给定时间内都只能有一个任务处于运行状态。 准备就绪：准备就绪任务指那些能够执行（它们不处于阻塞或挂起状态），但目前没有执行的任务，因为同等或更高优先级的不同任务已经处于运行状态。 阻塞：如果任务当前正在等待时间或外部时间，则该任务被认为处于阻塞状态。例如，如果一个任务调用vTaskDelay()，它将被阻塞（被置于阻塞状态），直到延迟结束一个时间事件。任务也可以通过阻塞来等待队列、信号量、事件组、通知或信号量事件。处于阻塞状态的任务通常有一个“超时”期，超时后任务被超时，并被解除阻塞，即使该任务所等待的事件没有发生。 “阻塞”状态下的任务不使用任何处理时间，不能 被选择进入运行状态。 挂起：与“阻塞”状态下的任务一样，“挂起”状态下的任务不能 被选择进入运行状态，但处于挂起状态的任务 没有超时。相反，任务只有在分别通过vTaskSuspend() 和 xTaskResume()...</div></div></div></a><a class="pagination-related" href="/2025/05/21/1%E3%80%81freertos/5%E3%80%81%E5%AF%B9%E6%AF%945/" title="5.对比"><img class="cover" src="/img/sophie-skold-EZGwKfRR5Zc-unsplash.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-05-21</div><div class="info-item-2">5.对比</div></div><div class="info-2"><div class="info-item-1">   机制 用途 特点 适用场景    队列（Queue） 传递数据 支持多个数据项排队 任务间传递结构体&#x2F;数值等数据   信号量（Semaphore） 同步 &#x2F; 互斥 不传递数据，只传“信号” 同步事件、任务间或中断间的配合   互斥锁（Mutex） 资源互斥保护 特殊的二值信号量 + 优先级继承 多任务访问共享资源（如 I²C、串口）   事件组（Event Group） 多位同步控制 可同时表示多个状态位 控制多个条件满足才执行，如联网、就绪等   任务通知（Task Notification） 点对点通知 + 可传值 轻量，效率高，限单任务 一对一传递信号或数据   🧩 各模块详细对比1. ✅ 队列（Queue） 可以传递数据（整数、结构体等）  先进先出（FIFO）机制  可以阻塞等待队列满或空  支持任务与任务 &#x2F; 中断与任务之间通信   🔧 示例用途： xQueueSend(queue, &amp;data, portMAX_DELAY);     // 发送数据 xQueueReceive(queue, &amp;data,...</div></div></div></a><a class="pagination-related" href="/2025/05/20/1%E3%80%81freertos/4%E3%80%81%E4%BA%8B%E4%BB%B6%E7%BB%84%E5%92%8C%E7%9B%B4%E8%BE%BE%E4%BB%BB%E5%8A%A1%E9%80%9A%E7%9F%A54/" title="4.事件组和直达任务通知"><img class="cover" src="/img/annie-spratt-RLyzuGKlQcM-unsplash.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2025-05-20</div><div class="info-item-2">4.事件组和直达任务通知</div></div><div class="info-2"><div class="info-item-1">事件组事件位：用于指示事件是否发生，事件位通常称为事件标志；事件组：就是一组事件位。事件组中的事件位通过位编号来引用； ![[Pasted image 20250518153023.png]] 12345678910111213141516171819202122232425//创建一个事件组，返回事件组句柄，失败返回NULLEventGroupHandle_t xEventGroupCreate(void);//等待事件组中某个标志位，用返回值以确定哪些位已完成设置EventBits_t xEventGroupWaitBits(	const EventGroupHandle_t xEventGroup,//事件组句柄	const EventBits_t uxBitsToWaitFor,//哪些位需要等待	const BaseType_t xClearOnExit,//是否自动清除标志位	const BaseType_t xWaitForAllBits,//是否等待的标志位都成功了才返回	TickType_t...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/pony.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">youran</div><div class="author-info-description">youran 的技术博客，记录学习与思考</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">13</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">4</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/" target="_blank" title="Github"><i class="fab fa-github"></i></a><a class="social-icon" href="tencent://AddContact/?fromId=45&amp;fromSubId=1&amp;subcmd=all&amp;uin=3474529139&amp;website=www.oicqzone.com" target="_blank" title="QQ"><i class="fab fa-qq"></i></a><a class="social-icon" href="mailto:3474529139@qq.com" target="_blank" title="Email"><i class="fas fa-envelope-open-text"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">写代码，也写生活；探索技术，也记录灵感。</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content is-expand"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BC%95%E8%84%9A%E6%95%B4%E4%BD%93%E8%AF%B4%E6%98%8E"><span class="toc-text">引脚整体说明</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2025/05/23/2%E3%80%81%E5%A4%96%E8%AE%BE%E6%95%99%E7%A8%8B/3%E3%80%81%E8%A7%A6%E6%91%B8/3.3%20%E8%A7%A6%E6%91%B8%E4%B8%AD%E6%96%AD/" title="无标题">无标题</a><time datetime="2025-05-23T01:11:10.304Z" title="发表于 2025-05-23 09:11:10">2025-05-23</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2025/05/23/2%E3%80%81%E5%A4%96%E8%AE%BE%E6%95%99%E7%A8%8B/3%E3%80%81%E8%A7%A6%E6%91%B8/3.2%20%E8%A7%A6%E6%91%B8%E4%BF%A1%E5%8F%B7%E9%87%87%E9%9B%86/" title="无标题">无标题</a><time datetime="2025-05-23T01:11:10.301Z" title="发表于 2025-05-23 09:11:10">2025-05-23</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2025/05/23/2%E3%80%81%E5%A4%96%E8%AE%BE%E6%95%99%E7%A8%8B/3%E3%80%81%E8%A7%A6%E6%91%B8/3.1%20%E8%A7%A6%E6%91%B8%E4%BC%A0%E6%84%9F%E5%99%A8%E7%90%86%E8%AE%BA/" title="无标题">无标题</a><time datetime="2025-05-23T01:11:10.298Z" title="发表于 2025-05-23 09:11:10">2025-05-23</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/05/21/1%E3%80%81freertos/5%E3%80%81%E5%AF%B9%E6%AF%945/" title="5.对比"><img src="/img/sophie-skold-EZGwKfRR5Zc-unsplash.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="5.对比"/></a><div class="content"><a class="title" href="/2025/05/21/1%E3%80%81freertos/5%E3%80%81%E5%AF%B9%E6%AF%945/" title="5.对比">5.对比</a><time datetime="2025-05-20T16:00:00.000Z" title="发表于 2025-05-21 00:00:00">2025-05-21</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025/05/21/2%E3%80%81%E5%A4%96%E8%AE%BE%E6%95%99%E7%A8%8B/2%E3%80%81%E4%B8%AD%E6%96%AD/2.1%20%E4%B8%AD%E6%96%AD%E7%90%86%E8%AE%BA/" title="2.1中断理论"><img src="/img/adrian-appalsamy-RS_qigq_dC8-unsplash.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="2.1中断理论"/></a><div class="content"><a class="title" href="/2025/05/21/2%E3%80%81%E5%A4%96%E8%AE%BE%E6%95%99%E7%A8%8B/2%E3%80%81%E4%B8%AD%E6%96%AD/2.1%20%E4%B8%AD%E6%96%AD%E7%90%86%E8%AE%BA/" title="2.1中断理论">2.1中断理论</a><time datetime="2025-05-20T16:00:00.000Z" title="发表于 2025-05-21 00:00:00">2025-05-21</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2019 - 2025 By youran</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.3.5</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><div class="js-pjax"></div><canvas id="universe"></canvas><script src="/js/universe.js"></script><script src="/styles/fish.js"></script><script src="https://fastly.jsdelivr.net/gh/yuanhaoz/Sakura@master/static/js/sakura.js"></script><script src="/js/bubble.js"></script><script defer="defer" id="fluttering_ribbon" mobile="false" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-fluttering-ribbon.min.js"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = true;
+POWERMODE.mobile = true;
+document.body.addEventListener('input', POWERMODE);
+</script><script id="click-heart" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/click-heart.min.js" async="async" mobile="false"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="Search..." type="text"/></div></div><hr/><div id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>
